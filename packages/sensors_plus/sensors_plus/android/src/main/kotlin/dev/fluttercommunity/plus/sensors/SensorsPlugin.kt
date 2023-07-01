@@ -10,11 +10,13 @@ import io.flutter.plugin.common.EventChannel
 
 /** SensorsPlugin  */
 class SensorsPlugin : FlutterPlugin {
+    private lateinit var attitudeChannel: EventChannel
     private lateinit var accelerometerChannel: EventChannel
     private lateinit var userAccelChannel: EventChannel
     private lateinit var gyroscopeChannel: EventChannel
     private lateinit var magnetometerChannel: EventChannel
 
+    private lateinit var attitudeStreamHandler: AttitudeStreamHandlerImpl
     private lateinit var accelerationStreamHandler: StreamHandlerImpl
     private lateinit var linearAccelerationStreamHandler: StreamHandlerImpl
     private lateinit var gyroScopeStreamHandler: StreamHandlerImpl
@@ -30,6 +32,12 @@ class SensorsPlugin : FlutterPlugin {
 
     private fun setupEventChannels(context: Context, messenger: BinaryMessenger) {
         val sensorsManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+        attitudeChannel = EventChannel(messenger, ATTITUDE_CHANNEL_NAME)
+        attitudeStreamHandler = AttitudeStreamHandlerImpl(
+            sensorsManager
+        )
+        attitudeChannel.setStreamHandler(attitudeStreamHandler)
 
         accelerometerChannel = EventChannel(messenger, ACCELEROMETER_CHANNEL_NAME)
         accelerationStreamHandler = StreamHandlerImpl(
@@ -61,11 +69,13 @@ class SensorsPlugin : FlutterPlugin {
     }
 
     private fun teardownEventChannels() {
+        attitudeChannel.setStreamHandler(null)
         accelerometerChannel.setStreamHandler(null)
         userAccelChannel.setStreamHandler(null)
         gyroscopeChannel.setStreamHandler(null)
         magnetometerChannel.setStreamHandler(null)
 
+        attitudeStreamHandler.onCancel(null)
         accelerationStreamHandler.onCancel(null)
         linearAccelerationStreamHandler.onCancel(null)
         gyroScopeStreamHandler.onCancel(null)
@@ -73,6 +83,8 @@ class SensorsPlugin : FlutterPlugin {
     }
 
     companion object {
+        private const val ATTITUDE_CHANNEL_NAME =
+            "dev.fluttercommunity.plus/sensors/attitude"
         private const val ACCELEROMETER_CHANNEL_NAME =
             "dev.fluttercommunity.plus/sensors/accelerometer"
         private const val GYROSCOPE_CHANNEL_NAME = "dev.fluttercommunity.plus/sensors/gyroscope"
