@@ -67,9 +67,11 @@ internal class AttitudeStreamHandlerImpl(
                 SensorManager.getOrientation(rotationMatrix, orientationAngles)
 
                 val sensorValues = DoubleArray(3)
-                orientationAngles.forEachIndexed { index, value ->
-                    sensorValues[index] = value.toDouble()
-                }
+
+                sensorValues[0] = orientationAngles[2].toDouble()
+                sensorValues[1] = - orientationAngles[1].toDouble()
+                sensorValues[2] = - orientationAngles[0].toDouble()
+
                 events.success(sensorValues)
             }
         }
