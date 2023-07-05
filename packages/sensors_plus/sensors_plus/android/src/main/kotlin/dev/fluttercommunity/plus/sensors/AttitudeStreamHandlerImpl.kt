@@ -6,6 +6,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.EventChannel.EventSink
+import kotlin.math.PI
 
 internal class AttitudeStreamHandlerImpl(
     private val sensorManager: SensorManager
@@ -31,12 +32,12 @@ internal class AttitudeStreamHandlerImpl(
         sensorManager.registerListener(
             sensorEventListener,
             gravitySensor,
-            SensorManager.SENSOR_DELAY_NORMAL,
+            SensorManager.SENSOR_DELAY_FASTEST,
         )
         sensorManager.registerListener(
             sensorEventListener,
             magneticFieldSensor,
-            SensorManager.SENSOR_DELAY_NORMAL,
+            SensorManager.SENSOR_DELAY_FASTEST,
         )
     }
 
@@ -50,11 +51,16 @@ internal class AttitudeStreamHandlerImpl(
             override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
 
             override fun onSensorChanged(event: SensorEvent) {
+                var alpha: Float = 0.97f
 
                 if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-                    System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
+                    accelerometerReading[0] = alpha * accelerometerReading[0] + (1 - alpha) * event.values[0]
+                    accelerometerReading[1] = alpha * accelerometerReading[1] + (1 - alpha) * event.values[1]
+                    accelerometerReading[2] = alpha * accelerometerReading[2] + (1 - alpha) * event.values[2]
                 } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-                    System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
+                    magnetometerReading[0] = alpha * magnetometerReading[0] + (1 - alpha) * event.values[0]
+                    magnetometerReading[1] = alpha * magnetometerReading[1] + (1 - alpha) * event.values[1]
+                    magnetometerReading[2] = alpha * magnetometerReading[2] + (1 - alpha) * event.values[2]
                 }
 
                 SensorManager.getRotationMatrix(
@@ -70,7 +76,7 @@ internal class AttitudeStreamHandlerImpl(
 
                 sensorValues[0] = orientationAngles[2].toDouble()
                 sensorValues[1] = - orientationAngles[1].toDouble()
-                sensorValues[2] = - orientationAngles[0].toDouble()
+                sensorValues[2] = - orientationAngles[0].toDouble() - PI/2
 
                 events.success(sensorValues)
             }
