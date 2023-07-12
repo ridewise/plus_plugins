@@ -32,12 +32,12 @@ internal class AttitudeStreamHandlerImpl(
         sensorManager.registerListener(
             sensorEventListener,
             gravitySensor,
-            SensorManager.SENSOR_DELAY_FASTEST,
+            SensorManager.SENSOR_DELAY_NORMAL,
         )
         sensorManager.registerListener(
             sensorEventListener,
             magneticFieldSensor,
-            SensorManager.SENSOR_DELAY_FASTEST,
+            SensorManager.SENSOR_DELAY_NORMAL,
         )
     }
 
