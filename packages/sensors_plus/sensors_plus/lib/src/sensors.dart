@@ -19,6 +19,11 @@ class Sensors extends SensorsPlatform {
     return _platform.attitudeEvents;
   }
 
+  @override
+  Stream<AttitudeQuaternionEvent> get attitudeQuaternionEvents {
+    return _platform.attitudeQuaternionEvents;
+  }
+
   /// A broadcast stream of events from the device accelerometer.
   @override
   Stream<AccelerometerEvent> get accelerometerEvents {

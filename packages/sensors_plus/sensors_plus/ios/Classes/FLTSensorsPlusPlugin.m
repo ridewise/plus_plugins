@@ -67,6 +67,19 @@ BOOL _isCleanUp = NO;
     [_streamHandlers setObject:attitudeStreamHandler
                         forKey:attitudeStreamHandlerName];
 
+  FLTAttitudeQuaternionStreamHandlerPlus *attitudeQuaternionStreamHandler =
+          [[FLTAttitudeQuaternionStreamHandlerPlus alloc] init];
+      NSString *attitudeQuaternionStreamHandlerName =
+          @"dev.fluttercommunity.plus/sensors/attitude";
+      FlutterEventChannel *attitudeQuaternionChannel =
+          [FlutterEventChannel eventChannelWithName:attitudeQuaternionStreamHandlerName
+                                    binaryMessenger:[registrar messenger]];
+      [attitudeQuaternionChannel setStreamHandler:attitudeQuaternionStreamHandler];
+      [_eventChannels setObject:attitudeQuaternionChannel
+                         forKey:attitudeQuaternionStreamHandlerName];
+      [_streamHandlers setObject:attitudeQuaternionStreamHandler
+                          forKey:attitudeQuaternionStreamHandlerName];
+
   FLTMagnetometerStreamHandlerPlus *magnetometerStreamHandler =
       [[FLTMagnetometerStreamHandlerPlus alloc] init];
   NSString *magnetometerStreamHandlerName =
@@ -105,6 +118,7 @@ static void _cleanUp(void) {
 const double GRAVITY = 9.81;
 CMMotionManager *_motionManager;
 CMMotionManager *_motionManagerOrientation;
+CMMotionManager *_motionManagerOrientationQuaternion;
 
 void _initMotionManager(void) {
   if (!_motionManager) {
@@ -124,6 +138,27 @@ static void sendTriplet(Float64 x, Float64 y, Float64 z,
   // and fired until fully detached.
   @try {
     NSMutableData *event = [NSMutableData dataWithCapacity:3 * sizeof(Float64)];
+    [event appendBytes:&x length:sizeof(Float64)];
+    [event appendBytes:&y length:sizeof(Float64)];
+    [event appendBytes:&z length:sizeof(Float64)];
+
+    sink([FlutterStandardTypedData typedDataWithFloat64:event]);
+  } @catch (NSException *e) {
+    NSLog(@"Error: %@ %@", e, [e userInfo]);
+  } @finally {
+  }
+}
+
+static void sendQuadruplet(Float64 w, Float64 x, Float64 y, Float64 z,
+                        FlutterEventSink sink) {
+  if (_isCleanUp) {
+    return;
+  }
+  // Even after [detachFromEngineForRegistrar] some events may still be received
+  // and fired until fully detached.
+  @try {
+    NSMutableData *event = [NSMutableData dataWithCapacity:4 * sizeof(Float64)];
+    [event appendBytes:&w length:sizeof(Float64)];
     [event appendBytes:&x length:sizeof(Float64)];
     [event appendBytes:&y length:sizeof(Float64)];
     [event appendBytes:&z length:sizeof(Float64)];
@@ -261,6 +296,40 @@ static void sendTriplet(Float64 x, Float64 y, Float64 z,
 }
 
 @end
+
+
+@implementation FLTAttitudeQuaternionStreamHandlerPlus
+
+- (FlutterError *)onListenWithArguments:(id)arguments
+                              eventSink:(FlutterEventSink)eventSink {
+  _initMotionManager();
+  _motionManagerOrientationQuaternion.showsDeviceMovementDisplay = YES;
+  [_motionManagerOrientationQuaternion startDeviceMotionUpdatesUsingReferenceFrame: CMAttitudeReferenceFrameXMagneticNorthZVertical
+                                                toQueue:[[NSOperationQueue alloc]
+                                                            init]
+                                            withHandler:^(CMDeviceMotion *motionData,
+                                                          NSError *error) {
+                    //CMAttitude attitudeData = motionData.attitude;
+                    if (_isCleanUp) {
+                      return;
+                    }
+                    sendQuadruplet(motionData.attitude.quaternion.w, motionData.attitude.quaternion.x, motionData.attitude.quaternion.y, motionData.attitude.quaternion.z,
+                                eventSink);
+                  }];
+  return nil;
+}
+
+- (FlutterError *)onCancelWithArguments:(id)arguments {
+  [_motionManagerOrientation stopDeviceMotionUpdates];
+  return nil;
+}
+
+- (void)dealloc {
+  _cleanUp();
+}
+
+@end
+
 
 @implementation FLTMagnetometerStreamHandlerPlus
 
