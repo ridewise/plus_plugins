@@ -23,11 +23,15 @@ class MethodChannelSensors extends SensorsPlatform {
   static const EventChannel _attitudeEventChannel =
       EventChannel('dev.fluttercommunity.plus/sensors/attitude');
 
+  static const EventChannel _attitudeQuaternionEventChannel =
+  EventChannel('dev.fluttercommunity.plus/sensors/attitudeQuaternion');
+
   Stream<AccelerometerEvent>? _accelerometerEvents;
   Stream<GyroscopeEvent>? _gyroscopeEvents;
   Stream<UserAccelerometerEvent>? _userAccelerometerEvents;
   Stream<MagnetometerEvent>? _magnetometerEvents;
   Stream<AttitudeEvent>? _attitudeEvents;
+  Stream<AttitudeQuaternionEvent>? _attitudeQuaternionEvents;
 
   /// A broadcast stream of events from the device accelerometer.
   @override
@@ -83,5 +87,15 @@ class MethodChannelSensors extends SensorsPlatform {
       return AttitudeEvent(list[0]!, list[1]!, list[2]!);
     });
     return _attitudeEvents!;
+  }
+
+  @override
+  Stream<AttitudeQuaternionEvent> get attitudeQuaternionEvents {
+    _attitudeQuaternionEvents ??=
+        _attitudeQuaternionEventChannel.receiveBroadcastStream().map((dynamic event) {
+          final list = event.cast<double>();
+          return AttitudeQuaternionEvent(list[0]!, list[1]!, list[2]!, list[3]!);
+        });
+    return _attitudeQuaternionEvents!;
   }
 }

@@ -24,6 +24,19 @@ void main() {
     expect(event.z, sensorData[2]);
   });
 
+  test('$attitudeQuaternionEvents are streamed', () async {
+    const channelName = 'dev.fluttercommunity.plus/sensors/attitudeQuaternion';
+    const sensorData = <double>[1.0, 2.0, 3.0, 4.0];
+    _initializeFakeSensorChannel(channelName, sensorData);
+
+    final event = await attitudeQuaternionEvents.first;
+
+    expect(event.w, sensorData[0]);
+    expect(event.x, sensorData[1]);
+    expect(event.y, sensorData[2]);
+    expect(event.z, sensorData[3]);
+  });
+
   test('$accelerometerEvents are streamed', () async {
     const channelName = 'dev.fluttercommunity.plus/sensors/accelerometer';
     const sensorData = <double>[1.0, 2.0, 3.0];

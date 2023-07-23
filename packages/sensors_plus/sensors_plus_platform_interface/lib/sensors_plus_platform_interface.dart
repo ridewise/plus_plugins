@@ -70,6 +70,6 @@ abstract class SensorsPlatform extends PlatformInterface {
 
 
   Stream<AttitudeQuaternionEvent> get attitudeQuaternionEvents {
-    throw UnimplementedError('attitudeEvents has not been implemented.');
+    throw UnimplementedError('attitudeQuaternionEvents has not been implemented.');
   }
 }

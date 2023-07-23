@@ -70,7 +70,7 @@ BOOL _isCleanUp = NO;
   FLTAttitudeQuaternionStreamHandlerPlus *attitudeQuaternionStreamHandler =
           [[FLTAttitudeQuaternionStreamHandlerPlus alloc] init];
       NSString *attitudeQuaternionStreamHandlerName =
-          @"dev.fluttercommunity.plus/sensors/attitude";
+          @"dev.fluttercommunity.plus/sensors/attitudeQuaternion";
       FlutterEventChannel *attitudeQuaternionChannel =
           [FlutterEventChannel eventChannelWithName:attitudeQuaternionStreamHandlerName
                                     binaryMessenger:[registrar messenger]];
