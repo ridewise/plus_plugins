@@ -127,6 +127,9 @@ void _initMotionManager(void) {
   if (!_motionManagerOrientation) {
     _motionManagerOrientation = [[CMMotionManager alloc] init];
   }
+  if (!_motionManagerOrientationQuaternion) {
+      _motionManagerOrientationQuaternion = [[CMMotionManager alloc] init];
+    }
 }
 
 static void sendTriplet(Float64 x, Float64 y, Float64 z,
