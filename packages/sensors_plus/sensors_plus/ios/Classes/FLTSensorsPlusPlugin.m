@@ -67,6 +67,19 @@ BOOL _isCleanUp = NO;
     [_streamHandlers setObject:attitudeStreamHandler
                         forKey:attitudeStreamHandlerName];
 
+  FLTAttitudeRotationMatrixStreamHandlerPlus *attitudeRotationMatrixStreamHandler =
+         [[FLTAttitudeRotationMatrixStreamHandlerPlus alloc] init];
+      NSString *attitudeRotationMatrixStreamHandlerName =
+          @"dev.fluttercommunity.plus/sensors/attitudeRotationMatrix";
+      FlutterEventChannel *attitudeRotationMatrixChannel =
+          [FlutterEventChannel eventChannelWithName:attitudeRotationMatrixStreamHandlerName
+                                    binaryMessenger:[registrar messenger]];
+      [attitudeRotationMatrixChannel setStreamHandler:attitudeRotationMatrixStreamHandler];
+      [_eventChannels setObject:attitudeRotationMatrixChannel
+                         forKey:attitudeRotationMatrixStreamHandlerName];
+      [_streamHandlers setObject:attitudeRotationMatrixStreamHandler
+                          forKey:attitudeRotationMatrixStreamHandlerName];
+
   FLTMagnetometerStreamHandlerPlus *magnetometerStreamHandler =
       [[FLTMagnetometerStreamHandlerPlus alloc] init];
   NSString *magnetometerStreamHandlerName =
@@ -105,6 +118,7 @@ static void _cleanUp(void) {
 const double GRAVITY = 9.81;
 CMMotionManager *_motionManager;
 CMMotionManager *_motionManagerOrientation;
+CMMotionManager *_motionManagerOrientationRotationMatrix;
 
 void _initMotionManager(void) {
   if (!_motionManager) {
@@ -112,6 +126,9 @@ void _initMotionManager(void) {
   }
   if (!_motionManagerOrientation) {
     _motionManagerOrientation = [[CMMotionManager alloc] init];
+  }
+  if (!_motionManagerOrientationRotationMatrix) {
+        _motionManagerOrientationRotationMatrix = [[CMMotionManager alloc] init];
   }
 }
 
@@ -127,6 +144,32 @@ static void sendTriplet(Float64 x, Float64 y, Float64 z,
     [event appendBytes:&x length:sizeof(Float64)];
     [event appendBytes:&y length:sizeof(Float64)];
     [event appendBytes:&z length:sizeof(Float64)];
+
+    sink([FlutterStandardTypedData typedDataWithFloat64:event]);
+  } @catch (NSException *e) {
+    NSLog(@"Error: %@ %@", e, [e userInfo]);
+  } @finally {
+  }
+}
+
+static void sendMatrix(Float64 m11, Float64 m12, Float64 m13, Float64 m21, Float64 m22, Float64 m23, Float64 m31, Float64 m32, Float64 m33,
+                        FlutterEventSink sink) {
+  if (_isCleanUp) {
+    return;
+  }
+  // Even after [detachFromEngineForRegistrar] some events may still be received
+  // and fired until fully detached.
+  @try {
+    NSMutableData *event = [NSMutableData dataWithCapacity:9 * sizeof(Float64)];
+    [event appendBytes:&m11 length:sizeof(Float64)];
+    [event appendBytes:&m12 length:sizeof(Float64)];
+    [event appendBytes:&m13 length:sizeof(Float64)];
+    [event appendBytes:&m21 length:sizeof(Float64)];
+    [event appendBytes:&m22 length:sizeof(Float64)];
+    [event appendBytes:&m23 length:sizeof(Float64)];
+    [event appendBytes:&m31 length:sizeof(Float64)];
+    [event appendBytes:&m32 length:sizeof(Float64)];
+    [event appendBytes:&m33 length:sizeof(Float64)];
 
     sink([FlutterStandardTypedData typedDataWithFloat64:event]);
   } @catch (NSException *e) {
@@ -261,6 +304,42 @@ static void sendTriplet(Float64 x, Float64 y, Float64 z,
 }
 
 @end
+
+@implementation FLTAttitudeRotationMatrixStreamHandlerPlus
+
+- (FlutterError *)onListenWithArguments:(id)arguments
+                              eventSink:(FlutterEventSink)eventSink {
+  _initMotionManager();
+  _motionManagerOrientationRotationMatrix.showsDeviceMovementDisplay = YES;
+  [_motionManagerOrientationRotationMatrix startDeviceMotionUpdatesUsingReferenceFrame: CMAttitudeReferenceFrameXMagneticNorthZVertical
+                                                toQueue:[[NSOperationQueue alloc]
+                                                            init]
+                                            withHandler:^(CMDeviceMotion *motionData,
+                                                          NSError *error) {
+                    //CMAttitude attitudeData = motionData.attitude;
+                    if (_isCleanUp) {
+                      return;
+                    }
+      sendMatrix(motionData.attitude.rotationMatrix.m11, motionData.attitude.rotationMatrix.m12, motionData.attitude.rotationMatrix.m13,
+                                   motionData.attitude.rotationMatrix.m21, motionData.attitude.rotationMatrix.m22, motionData.attitude.rotationMatrix.m23,
+                                   motionData.attitude.rotationMatrix.m31, motionData.attitude.rotationMatrix.m32, motionData.attitude.rotationMatrix.m33,
+                                eventSink);
+                  }];
+  return nil;
+}
+
+- (FlutterError *)onCancelWithArguments:(id)arguments {
+  [_motionManagerOrientation stopDeviceMotionUpdates];
+  return nil;
+}
+
+- (void)dealloc {
+  _cleanUp();
+}
+
+@end
+
+
 
 @implementation FLTMagnetometerStreamHandlerPlus
 

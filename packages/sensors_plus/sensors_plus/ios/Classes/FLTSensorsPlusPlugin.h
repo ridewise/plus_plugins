@@ -19,5 +19,8 @@
 @interface FLTAttitudeStreamHandlerPlus : NSObject <FlutterStreamHandler>
 @end
 
+@interface FLTAttitudeRotationMatrixStreamHandlerPlus : NSObject <FlutterStreamHandler>
+@end
+
 @interface FLTMagnetometerStreamHandlerPlus : NSObject <FlutterStreamHandler>
 @end

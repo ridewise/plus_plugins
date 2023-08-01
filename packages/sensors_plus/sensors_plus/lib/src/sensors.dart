@@ -19,6 +19,11 @@ class Sensors extends SensorsPlatform {
     return _platform.attitudeEvents;
   }
 
+  @override
+  Stream<AttitudeRotationMatrixEvent> get attitudeRotationMatrixEvents {
+    return _platform.attitudeRotationMatrixEvents;
+  }
+
   /// A broadcast stream of events from the device accelerometer.
   @override
   Stream<AccelerometerEvent> get accelerometerEvents {
